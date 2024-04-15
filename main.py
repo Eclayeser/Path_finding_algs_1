@@ -20,37 +20,68 @@ input_field_displayed = False
 destination = ""
 
 
-"""
-class Object(pygame.sprite.Sprite):
-     def __init__(self):
+class Button(pygame.sprite.Sprite):
+    def __init__(self, image, image_highlight, pos_x, pos_y, scale):
         super().__init__()
+        width = image.get_width()
+        height= image.get_height()
+        
 
-class Node(Object):
-    def __init__(self, pos_x, pos_y, ident):
-        super().__init__()
-        self.weight = None
-        self.width = red_node_img.get_width()
-        self.height = red_node_img.get_height()
-        self.ident = text_font.render(str(ident), True, (0, 0, 0))
-        if self.weight != None:
-            self.weight_display = text_font.render(str(self.weight), True, (0, 0, 0))
-        elif self.weight == None:
-            self.weight_display = text_font.render("-", True, (0, 0, 0))
-
-
-        self.image = red_node_img
+        self.image_normal = pygame.transform.scale(image, (int(width*scale), int(height*scale)))
+        
+        self.image_highlight = pygame.transform.scale(image_highlight, (int(width*scale), int(height*scale)))
+        
+        self.image = self.image_normal
         self.rect = self.image.get_rect()
-        self.rect.center = [pos_x, pos_y]
+        self.rect.topleft = [pos_x, pos_y]
+        self.clicked = False
+        self.new_image = False
+        self.selected = False
+        self.already_pressed = False
+        
+        
+        
 
+    def check_clicked(self):
+        action = False
+        pos = pygame.mouse.get_pos()
 
+        if self.rect.collidepoint(pos):
+            self.new_image = True
+            if pygame.mouse.get_pressed()[0] == True and self.clicked == False:
+                action = True
+                self.clicked = True
+        if pygame.mouse.get_pressed()[0] == False:
+                self.clicked = False
+                self.already_pressed = False
+        if self.rect.collidepoint(pos) == False:
+            self.new_image = False
 
-    def set_weight(self, weight):
-        self.weight = weight
+        return action
+    
+    def select_deselect(self):
+
+        if self.selected == False and self.already_pressed == False:
+            self.selected = True
+            self.already_pressed = True
+        if self.selected == True and self.already_pressed == False:
+            self.selected = False
+            self.already_pressed = True
+
+    def deselect(self):
+        self.selected = False
+        self.already_pressed = True
+
+    def getSelected(self):
+        return self.selected
+        
 
     def update(self):
-        screen.blit(self.ident, (self.rect.x+(self.rect.width/2)-(self.ident.get_width()/2), self.rect.y+(self.rect.height/2)-(self.ident.get_height()/1.5))) 
-        screen.blit(self.weight_display, (self.rect.x+(self.rect.width/2)-(self.weight_display.get_width()/2), self.rect.y+(self.rect.height/2))) 
-"""
+         if self.new_image == True or self.selected == True:
+            self.image = self.image_highlight
+         if self.new_image == False and self.selected == False:
+            self.image = self.image_normal
+
 
 class Mesh:
     def __init__(self):
@@ -64,11 +95,11 @@ class Mesh:
     def getNodes(self):
         print(self.nodes)
 
-    def addNode(self, value, pos_x, pos_y, weight):
+    def addNode(self, value, pos_x, pos_y, weight, data):
         if weight == None:
             weight = 40
         self.adjacencies[value] = []
-        self.nodes[value] = [(pos_x, pos_y), weight]
+        self.nodes[value] = [(pos_x, pos_y), weight, data]
         
 
     def joinNodes(self, from_node, *to_nodes):
@@ -76,46 +107,85 @@ class Mesh:
             self.adjacencies[from_node].append(to_node)
 
 
+dijkstra_alg_btn = Button(pygame.image.load('dijkstra_btn_1.png'), pygame.image.load('dijkstra_btn_2.png'), 1090, 500, 0.5)
+buttons_spr_group = pygame.sprite.Group()
+buttons_spr_group.add(dijkstra_alg_btn)
+
+
 
 myMesh = Mesh()
-myMesh.addNode("A", 100, 100, 50)
-myMesh.addNode("B", 200, 400, 45)
-myMesh.addNode("C", 600, 350, 60)
-myMesh.addNode("D", 800, 25, 30)
-myMesh.addNode("F", 350, 150, 75)
-#myTree.addNode("G")
-#myTree.addNode("H")
-#myTree.root = "A"
-myMesh.getNodes()
+myMesh.addNode("A", 100, 100, 40, "Apple")
+myMesh.addNode("B", 200, 400, 40, "Banana")
+myMesh.addNode("C", 400, 275, 30, "Cider")
+myMesh.addNode("D", 800, 25, 25, "Dong")
+myMesh.addNode("E", 350, 150, 30, "Ear")
+myMesh.addNode("F", 700, 350, 35, "Fire")
+myMesh.addNode("G", 700, 125, 25, "Grape")
+myMesh.addNode("H", 50, 490, 23, "Heat")
+myMesh.addNode("I", 850, 490, 27, "Iguana")
 
-myMesh.joinNodes("A",("B", 25), ("D", 40))
-myMesh.joinNodes("B",("C", 40), ("A", 25))
-myMesh.joinNodes("C",("B", 20), ("F", 25))
-myMesh.joinNodes("D",("C", 45), ("F", 15))
-myMesh.joinNodes("F",("A", 30), ("D", 50))
+
+myMesh.joinNodes("A",("D", 25), ("E", 40), ("H", 40))
+myMesh.joinNodes("B",("A", 40), ("C", 25), ("I", 25))
+myMesh.joinNodes("C",("A", 20), ("B", 25), ("E", 20))
+myMesh.joinNodes("D",("G", 45), ("I", 15))
+myMesh.joinNodes("E",("C", 30), ("D", 50), ("F", 50))
+myMesh.joinNodes("F",("C", 40), ("G", 25))
+myMesh.joinNodes("G",("D", 20), ("F", 25))
+myMesh.joinNodes("H",("A", 45))
+myMesh.joinNodes("I",("B", 30), ("D", 50))
+
+
+myMesh.getNodes()
 myMesh.getAdjacencies()
+
+
 
 current_position = "A"
 previous_node = ""
+node_data = ""
 next_positions = [j[0] for j in myMesh.adjacencies[current_position]]
 cumulative_distance = 0
-
+#keys_check = {"K_a": "A", "K_b": "B", "K_c": "C", "K_d": "D", "K_e": "E", "K_f": "F", "K_g": "G", "K_h": "H", "K_i": "I"}
 text_font_current_data = pygame.font.SysFont("Arial", 35, bold=True)
-
 node_names = [x for x in myMesh.nodes]
+time_interval = 0
 
-#square = pygame.Rect(0, 0, 30, 30)
-#square.center = (myMesh.nodes["A"][0][0]+(red_node_img.get_width()*(myMesh.nodes["A"][1]/50)/2)), (myMesh.nodes["A"][0][1]+(red_node_img.get_height()*(myMesh.nodes["A"][1]/50)/2))
+
 def look_for_distance(prev, to):
     for i in myMesh.adjacencies[prev]:
         if i[0] == to:
             return i[1]
+        
+def key_procedure_execute(name):
+    global previous_node
+    global current_position
+    global node_data
+    global next_positions
+    global cumulative_distance
+    previous_node = current_position
+    current_position = name
+    next_positions = [j[0] for j in myMesh.adjacencies[current_position]]
+    cumulative_distance += look_for_distance(previous_node, current_position)
+    node_data = myMesh.nodes[current_position][2]
           
+#def dijkstar_alg_execute(start_node, end_node):
+
+
+
+
 while run:
     screen.fill(bg_colour)
 
+    buttons_spr_group.update()
+    buttons_spr_group.draw(screen)
+
+
+
+
     path_distance_x_coor = 40
     path_distance_y_coor = 585
+    count = 0
     for node, adjs in myMesh.adjacencies.items():
         for adj in adjs:
             pygame.draw.line(screen, (255, 255, 0), (myMesh.nodes[node][0][0]+(red_node_img.get_width()*(myMesh.nodes[node][1]/50)/2), myMesh.nodes[node][0][1]+(red_node_img.get_height()*(myMesh.nodes[node][1]/50)/2)), (myMesh.nodes[adj[0]][0][0]+(red_node_img.get_width()*(myMesh.nodes[adj[0]][1]/50)/2), myMesh.nodes[adj[0]][0][1]+(red_node_img.get_height()*(myMesh.nodes[adj[0]][1]/50)/2)), width = 10)
@@ -125,7 +195,13 @@ while run:
             #screen.blit(display_distance, ( ((myMesh.nodes[node][0][0]+(red_node_img.get_width()*(myMesh.nodes[node][1]/50)/2))+(myMesh.nodes[adj[0]][0][0]+(red_node_img.get_width()*(myMesh.nodes[adj[0]][1]/50)/2)))/2 , ((myMesh.nodes[node][0][1]+(red_node_img.get_height()*(myMesh.nodes[node][1]/50)/2))+(myMesh.nodes[adj[0]][0][1]+(red_node_img.get_height()*(myMesh.nodes[adj[0]][1]/50)/2)))/2))
             screen.blit(display_distance, (path_distance_x_coor, path_distance_y_coor))
 
-            path_distance_x_coor += 100
+            if count <= 10:
+                path_distance_x_coor += 100
+                count += 1
+            else:
+                path_distance_x_coor = 40
+                path_distance_y_coor += 25
+                count = 1
         
             
     for node, info in myMesh.nodes.items():
@@ -146,50 +222,50 @@ while run:
         display_weight = text_font_weight.render(str(info[1]), True, (0, 0, 0))
         screen.blit(display_weight, (info[0][0]+(work_image.get_width()/2)-(display_weight.get_width()/2), info[0][1]+(work_image.get_height()/1.3)-(display_weight.get_height()/2)))
         
-        
-    #pygame.draw.rect(screen, (255, 255, 255), square)
-
     
     display_total_distance = text_font_current_data.render(f"cd: {cumulative_distance}", True, (0, 0, 0))
     display_previous_node = text_font_current_data.render(f"p_node: {previous_node}", True, (0, 0, 0))
+    display_node_data = text_font_current_data.render(f"data: {node_data}", True, (0, 0, 0))
     
-    screen.blit(display_total_distance, (1145, 20))
-    screen.blit(display_previous_node, (1145, 50))
-        
-    
+    screen.blit(display_total_distance, (1100, 20))
+    screen.blit(display_previous_node, (1100, 50))
+    screen.blit(display_node_data, (1100, 85))
+
 
     key = pygame.key.get_pressed()
+      
     if key[pygame.K_a] and (any("A" in i for i in myMesh.adjacencies[current_position])):
-        previous_node = current_position
-        current_position = "A"
-        next_positions = [j[0] for j in myMesh.adjacencies[current_position]]
-        cumulative_distance += look_for_distance(previous_node, current_position)
+        key_procedure_execute("A")
     if key[pygame.K_b] and (any("B" in i for i in myMesh.adjacencies[current_position])):
-        previous_node = current_position
-        current_position = "B"
-        next_positions = [j[0] for j in myMesh.adjacencies[current_position]]
-        cumulative_distance += look_for_distance(previous_node, current_position)
+        key_procedure_execute("B")
     if key[pygame.K_c] and (any("C" in i for i in myMesh.adjacencies[current_position])):
-        previous_node = current_position
-        current_position = "C"
-        next_positions = [j[0] for j in myMesh.adjacencies[current_position]]
-        cumulative_distance += look_for_distance(previous_node, current_position)
+        key_procedure_execute("C")
     if key[pygame.K_d] and (any("D" in i for i in myMesh.adjacencies[current_position])):
-        previous_node = current_position
-        current_position = "D"
-        next_positions = [j[0] for j in myMesh.adjacencies[current_position]]
-        cumulative_distance += look_for_distance(previous_node, current_position)
+        key_procedure_execute("D")
+    if key[pygame.K_e] and (any("E" in i for i in myMesh.adjacencies[current_position])):
+        key_procedure_execute("E")
     if key[pygame.K_f] and (any("F" in i for i in myMesh.adjacencies[current_position])):
-        previous_node = current_position
-        current_position = "F"
-        next_positions = [j[0] for j in myMesh.adjacencies[current_position]]
-        cumulative_distance += look_for_distance(previous_node, current_position)
-
+        key_procedure_execute("F")
+    if key[pygame.K_g] and (any("G" in i for i in myMesh.adjacencies[current_position])):
+        key_procedure_execute("G")
+    if key[pygame.K_h] and (any("H" in i for i in myMesh.adjacencies[current_position])):
+        key_procedure_execute("H")
+    if key[pygame.K_i] and (any("I" in i for i in myMesh.adjacencies[current_position])):
+        key_procedure_execute("I")
+    
 
     if key[pygame.K_p]:
         cumulative_distance = 0
+
+
+    if dijkstra_alg_btn.check_clicked() and time_interval > 3:
+        print("Owwa")
+        time_interval = 0
     
     
+    if time_interval < 6:
+        time_interval += 1
+
     for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
