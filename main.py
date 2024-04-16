@@ -148,8 +148,12 @@ next_positions = [j[0] for j in myMesh.adjacencies[current_position]]
 cumulative_distance = 0
 #keys_check = {"K_a": "A", "K_b": "B", "K_c": "C", "K_d": "D", "K_e": "E", "K_f": "F", "K_g": "G", "K_h": "H", "K_i": "I"}
 text_font_current_data = pygame.font.SysFont("Arial", 35, bold=True)
+text_font_table_data = pygame.font.SysFont("Arial", 20, bold=True)
 node_names = [x for x in myMesh.nodes]
 time_interval = 0
+display_table = False
+result_dict = {}
+
 
 
 def look_for_distance(prev, to):
@@ -168,9 +172,87 @@ def key_procedure_execute(name):
     next_positions = [j[0] for j in myMesh.adjacencies[current_position]]
     cumulative_distance += look_for_distance(previous_node, current_position)
     node_data = myMesh.nodes[current_position][2]
-          
-#def dijkstar_alg_execute(start_node, end_node):
 
+"""       
+def dijkstar_alg_execute(start_node_name, end_node_name):
+    unvisited_dictionary = {}
+    visited = []
+
+    for name, distance in myMesh.adjacencies[start_node_name]:
+        unvisited_dictionary[name] = [distance, start_node_name]
+    result_dict[start_node_name] = ["-", "-"]
+    visited.append(start_node_name)
+
+    while len(unvisited_dictionary) > 0:
+        compare_distances = [j[0] for i,j in result_dict.items() if type(j[0])== int and i not in visited]
+        min_value = min(compare_distances)
+        for next_node, next_node_data in result_dict.items():
+            if next_node_data[0] == min_value:
+                next_node_name = next_node
+           
+        currentNode_distance, previous_node_name = unvisited_dictionary.pop(next_node_name)
+        currentNode_name = next_node_name
+            
+       
+        if result_dict[currentNode_name][0] > currentNode_distance:
+            result_dict[currentNode_name] = []
+"""   
+
+def display_table_func(num_of_rows, dictionary):
+    keys_dict = [i for i in dictionary.keys()]
+    distance_dict = [i[0] for i in dictionary.values()]
+    prervious_dict = [i[1] for i in dictionary.values()]
+
+    y_coor_1 = 175
+    y_coor_2 = y_coor_1
+    x_coor_1 = 930
+    x_coor_2 = 1280
+
+    difference_y = 45
+    difference_x = (x_coor_2-x_coor_1)/len(myMesh.nodes)
+
+    x_coor_3 = x_coor_1 + difference_x/7
+    y_coor_3 = y_coor_1 + difference_y/4
+
+
+    for i in range(0, num_of_rows+1):
+        pygame.draw.line(screen, (0, 0, 0), (x_coor_1, y_coor_1), (x_coor_2, y_coor_1), width = 3)
+        
+        if i < num_of_rows:
+            for j in range(0, len(myMesh.nodes)):
+                if i == 0:
+                    try:
+                        display_table_data = text_font_table_data.render(str(keys_dict[j]), True, (0,0,0))
+                    except IndexError:
+                        display_table_data = text_font_table_data.render("-", True, (0,0,0))
+                    screen.blit(display_table_data, (x_coor_3, y_coor_3))
+                if i == 1:
+                    try:
+                        display_table_data = text_font_table_data.render(str(distance_dict[j]), True, (0,0,0))
+                    except IndexError:
+                        display_table_data = text_font_table_data.render("-", True, (0,0,0))
+                    screen.blit(display_table_data, (x_coor_3, y_coor_3))
+                if i == 2:
+                    try:
+                        display_table_data = text_font_table_data.render(str(prervious_dict[j]), True, (0,0,0))
+                    except IndexError:
+                        display_table_data = text_font_table_data.render("-", True, (0,0,0))
+                    screen.blit(display_table_data, (x_coor_3, y_coor_3))
+
+                x_coor_3 += difference_x
+                
+                if j == len(myMesh.nodes)-1:
+                    x_coor_3 = x_coor_1 + difference_x/7
+        
+        y_coor_1 += difference_y
+        y_coor_3 += difference_y
+
+    y_coor_1 -= difference_y
+   
+    for j in range(0, len(myMesh.nodes)+1):
+        pygame.draw.line(screen, (0, 0, 0), (x_coor_1, y_coor_2), (x_coor_1, y_coor_1), width = 3)
+        x_coor_1 += difference_x
+    
 
 
 
@@ -259,12 +341,17 @@ while run:
 
 
     if dijkstra_alg_btn.check_clicked() and time_interval > 3:
-        print("Owwa")
+        display_table = True
+        
         time_interval = 0
-    
+        num_ofrows = 3
+
     
     if time_interval < 6:
         time_interval += 1
+
+    if display_table:
+        display_table_func(num_ofrows, result_dict)
 
     for event in pygame.event.get():
             if event.type == pygame.QUIT:
