@@ -1,4 +1,5 @@
 import pygame
+import time
 
 
 pygame.init()
@@ -59,21 +60,6 @@ class Button(pygame.sprite.Sprite):
 
         return action
     
-    def select_deselect(self):
-
-        if self.selected == False and self.already_pressed == False:
-            self.selected = True
-            self.already_pressed = True
-        if self.selected == True and self.already_pressed == False:
-            self.selected = False
-            self.already_pressed = True
-
-    def deselect(self):
-        self.selected = False
-        self.already_pressed = True
-
-    def getSelected(self):
-        return self.selected
         
 
     def update(self):
@@ -156,6 +142,7 @@ result_dict = {}
 
 
 
+
 def look_for_distance(prev, to):
     for i in myMesh.adjacencies[prev]:
         if i[0] == to:
@@ -173,30 +160,45 @@ def key_procedure_execute(name):
     cumulative_distance += look_for_distance(previous_node, current_position)
     node_data = myMesh.nodes[current_position][2]
 
-"""       
-def dijkstar_alg_execute(start_node_name, end_node_name):
-    unvisited_dictionary = {}
-    visited = []
+      
+def dijkstar_alg_execute(start_node_name):
+    dictionary = {}
+    visited_nodes_names = []
 
-    for name, distance in myMesh.adjacencies[start_node_name]:
-        unvisited_dictionary[name] = [distance, start_node_name]
-    result_dict[start_node_name] = ["-", "-"]
-    visited.append(start_node_name)
+    dictionary[start_node_name] = [0, "-"]
 
-    while len(unvisited_dictionary) > 0:
-        compare_distances = [j[0] for i,j in result_dict.items() if type(j[0])== int and i not in visited]
+    #for name, distance in myMesh.adjacencies[start_node_name]:
+        #unvisited_dictionary[name] = [distance, start_node_name]
+    #result_dict[start_node_name] = ["-", "-"]
+   #visited.append(start_node_name)
+
+    while len(dictionary) > 0:
+        compare_distances = [j[0] for i,j in dictionary.items() if type(j[0])== int and i not in visited_nodes_names]
         min_value = min(compare_distances)
-        for next_node, next_node_data in result_dict.items():
-            if next_node_data[0] == min_value:
-                next_node_name = next_node
+        for k, v in dictionary.items():
+            if v[0] == min_value:
+                visit_node_name = k
+                
            
-        currentNode_distance, previous_node_name = unvisited_dictionary.pop(next_node_name)
-        currentNode_name = next_node_name
-            
-       
-        if result_dict[currentNode_name][0] > currentNode_distance:
-            result_dict[currentNode_name] = []
-"""   
+        visited_nodes_names.append(visit_node_name)
+        
+        
+        for adj in myMesh.adjacencies[visit_node_name]:
+            if adj[0] not in visited_nodes_names:
+                try:
+                    if adj[1]+dictionary[visit_node_name][0] < dictionary[adj[0]][0]:
+                        dictionary[adj[0]] = [adj[1]+dictionary[visit_node_name][0], visit_node_name]
+                except:
+                    dictionary[adj[0]] = [adj[1]+dictionary[visit_node_name][0], visit_node_name]
+
+
+        result_dict[visit_node_name] = [dictionary[visit_node_name][0], dictionary[visit_node_name][1]]
+        dictionary.pop(visit_node_name)
+        #print(dictionary)
+        
+        
+        
+ 
 
 def display_table_func(num_of_rows, dictionary):
     keys_dict = [i for i in dictionary.keys()]
@@ -342,13 +344,17 @@ while run:
 
     if dijkstra_alg_btn.check_clicked() and time_interval > 3:
         display_table = True
-        
+        start_consec_list_proc = True
+        dijkstar_alg_execute("A")
         time_interval = 0
         num_ofrows = 3
+       
+        
 
     
-    if time_interval < 6:
+    if time_interval < 200:
         time_interval += 1
+
 
     if display_table:
         display_table_func(num_ofrows, result_dict)
