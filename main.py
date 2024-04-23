@@ -132,7 +132,6 @@ previous_node = ""
 node_data = ""
 next_positions = [j[0] for j in myMesh.adjacencies[current_position]]
 cumulative_distance = 0
-#keys_check = {"K_a": "A", "K_b": "B", "K_c": "C", "K_d": "D", "K_e": "E", "K_f": "F", "K_g": "G", "K_h": "H", "K_i": "I"}
 text_font_current_data = pygame.font.SysFont("Arial", 35, bold=True)
 text_font_table_data = pygame.font.SysFont("Arial", 20, bold=True)
 node_names = [x for x in myMesh.nodes]
@@ -171,6 +170,7 @@ def dijkstar_alg_execute(start_node_name):
         #unvisited_dictionary[name] = [distance, start_node_name]
     #result_dict[start_node_name] = ["-", "-"]
    #visited.append(start_node_name)
+   #
 
     while len(dictionary) > 0:
         compare_distances = [j[0] for i,j in dictionary.items() if type(j[0])== int and i not in visited_nodes_names]
@@ -179,10 +179,8 @@ def dijkstar_alg_execute(start_node_name):
             if v[0] == min_value:
                 visit_node_name = k
                 
-           
         visited_nodes_names.append(visit_node_name)
-        
-        
+            
         for adj in myMesh.adjacencies[visit_node_name]:
             if adj[0] not in visited_nodes_names:
                 try:
@@ -191,10 +189,26 @@ def dijkstar_alg_execute(start_node_name):
                 except:
                     dictionary[adj[0]] = [adj[1]+dictionary[visit_node_name][0], visit_node_name]
 
+                #print(dictionary)
+
 
         result_dict[visit_node_name] = [dictionary[visit_node_name][0], dictionary[visit_node_name][1]]
         dictionary.pop(visit_node_name)
-        #print(dictionary)
+
+
+        print(result_dict)
+        #show the route
+        #list_for_the_route = []
+        #pointer = endNode
+        #while pointer != start_node_name:
+         #   for key, value in result_dict.items():
+          #      if key == pointer:
+           #         list_for_the_route.append(pointer)
+            #        pointer = value[1]
+
+        #display_the_route = text_font_table_data.render("", True, (0, 0, 0))
+        
+        #screen.blit()
         
         
         
