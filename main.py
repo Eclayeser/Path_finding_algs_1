@@ -19,6 +19,13 @@ orange_node_img = pygame.image.load("orange_node.png")
 input_made = False
 input_field_displayed = False
 destination = ""
+dijkstar_alg = False
+user_input_1 = ""
+user_input_2 = ""
+active_input_1 = False
+active_input_2 = False
+user_input_rect_1 = pygame.Rect(1040, 30, 35, 35)
+user_input_rect_2 = pygame.Rect(1040, 80, 35, 35)
 
 
 class Button(pygame.sprite.Sprite):
@@ -91,6 +98,18 @@ class Mesh:
     def joinNodes(self, from_node, *to_nodes):
         for to_node in to_nodes:
             self.adjacencies[from_node].append(to_node)
+    
+    def formListOfNodes(self):
+        list = []
+        for i in self.nodes.keys():
+            list.append(i)
+        return list
+    
+    def nodeExists(self, node):
+        if node in self.formListOfNodes():
+            return True
+        else:
+            return False
 
 
 dijkstra_alg_btn = Button(pygame.image.load('dijkstra_btn_1.png'), pygame.image.load('dijkstra_btn_2.png'), 1090, 500, 0.5)
@@ -122,8 +141,9 @@ myMesh.joinNodes("H",("A", 45))
 myMesh.joinNodes("I",("B", 30), ("D", 50))
 
 
-myMesh.getNodes()
-myMesh.getAdjacencies()
+#myMesh.getNodes()
+#myMesh.getAdjacencies()
+print(myMesh.nodeExists("P"))
 
 
 
@@ -134,11 +154,15 @@ next_positions = [j[0] for j in myMesh.adjacencies[current_position]]
 cumulative_distance = 0
 text_font_current_data = pygame.font.SysFont("Arial", 35, bold=True)
 text_font_table_data = pygame.font.SysFont("Arial", 20, bold=True)
+text_font_input = pygame.font.SysFont("Times New Roman", 30)
+
 node_names = [x for x in myMesh.nodes]
 time_interval = 0
-display_table = False
-result_dict = {}
+#display_table = False
+#result_dict = {}
 
+text_input_1_label_surface = text_font_current_data.render("Start:", True, (0, 0, 0))
+text_input_2_label_surface = text_font_current_data.render("End:", True, (0, 0, 0))
 
 
 
@@ -158,9 +182,8 @@ def key_procedure_execute(name):
     next_positions = [j[0] for j in myMesh.adjacencies[current_position]]
     cumulative_distance += look_for_distance(previous_node, current_position)
     node_data = myMesh.nodes[current_position][2]
-
-      
-def dijkstar_alg_execute(start_node_name):
+   
+def dijkstar_alg_execute(start_node_name, endNode):
     dictionary = {}
     visited_nodes_names = []
 
@@ -196,24 +219,19 @@ def dijkstar_alg_execute(start_node_name):
         dictionary.pop(visit_node_name)
 
 
-        print(result_dict)
-        #show the route
-        #list_for_the_route = []
-        #pointer = endNode
-        #while pointer != start_node_name:
-         #   for key, value in result_dict.items():
-          #      if key == pointer:
-           #         list_for_the_route.append(pointer)
-            #        pointer = value[1]
+    
+    #show the route
+    list_for_the_route = []
+    pointer = endNode
+    while pointer != start_node_name:
+        for key, value in result_dict.items():
+            if key == pointer:
+                list_for_the_route.append(pointer)
+                pointer = value[1]
+    list_for_the_route.append(start_node_name)
 
-        #display_the_route = text_font_table_data.render("", True, (0, 0, 0))
-        
-        #screen.blit()
-        
-        
-        
- 
-
+    return list_for_the_route
+     
 def display_table_func(num_of_rows, dictionary):
     keys_dict = [i for i in dictionary.keys()]
     distance_dict = [i[0] for i in dictionary.values()]
@@ -268,17 +286,64 @@ def display_table_func(num_of_rows, dictionary):
     for j in range(0, len(myMesh.nodes)+1):
         pygame.draw.line(screen, (0, 0, 0), (x_coor_1, y_coor_2), (x_coor_1, y_coor_1), width = 3)
         x_coor_1 += difference_x
-    
 
+def backtrack_list(list):
+    new_list = []
+    while len(list) > 0:
+        new_list.append(list.pop())
+    return new_list
 
+def validInput():
+    if myMesh.nodeExists(user_input_1) and myMesh.nodeExists(user_input_2):
+        return True
+    else:
+        return False
 
 while run:
     screen.fill(bg_colour)
 
+    for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if user_input_rect_1.collidepoint(event.pos):
+                    active_input_1 = True
+                    active_input_2 = False
+                elif user_input_rect_2.collidepoint(event.pos):
+                    active_input_2 = True
+                    active_input_1 = False
+                else:
+                    active_input_1 = False
+                    active_input_2 = False
+
+            if active_input_1 == True:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        user_input_1 = user_input_1[:-1]
+                    else :
+                        if len(user_input_1) < 1:
+                            user_input_1 += event.unicode
+            if active_input_2 == True:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        user_input_2 = user_input_2[:-1]
+                    else:
+                        if len(user_input_2) < 1:
+                            user_input_2 += event.unicode
+
     buttons_spr_group.update()
     buttons_spr_group.draw(screen)
 
+    pygame.draw.rect(screen, (0,0,0), user_input_rect_1, 2)
+    pygame.draw.rect(screen, (0,0,0), user_input_rect_2, 2)
 
+    text_input_1_surface = text_font_input.render(user_input_1, True, (0, 0, 0))
+    text_input_2_surface = text_font_input.render(user_input_2, True, (0, 0, 0))
+    screen.blit(text_input_1_surface, (user_input_rect_1.x + 5, user_input_rect_1.y))
+    screen.blit(text_input_2_surface, (user_input_rect_2.x + 5, user_input_rect_2.y))
+
+    screen.blit(text_input_1_label_surface, (user_input_rect_1.x - 80, user_input_rect_1.y))
+    screen.blit(text_input_2_label_surface, (user_input_rect_2.x - 80, user_input_rect_2.y))
 
 
     path_distance_x_coor = 40
@@ -300,8 +365,7 @@ while run:
                 path_distance_x_coor = 40
                 path_distance_y_coor += 25
                 count = 1
-        
-            
+                 
     for node, info in myMesh.nodes.items():
         if node == current_position:
             prework_node_image = purple_node_img
@@ -332,36 +396,48 @@ while run:
 
     key = pygame.key.get_pressed()
       
-    if key[pygame.K_a] and (any("A" in i for i in myMesh.adjacencies[current_position])):
-        key_procedure_execute("A")
-    if key[pygame.K_b] and (any("B" in i for i in myMesh.adjacencies[current_position])):
-        key_procedure_execute("B")
-    if key[pygame.K_c] and (any("C" in i for i in myMesh.adjacencies[current_position])):
-        key_procedure_execute("C")
-    if key[pygame.K_d] and (any("D" in i for i in myMesh.adjacencies[current_position])):
-        key_procedure_execute("D")
-    if key[pygame.K_e] and (any("E" in i for i in myMesh.adjacencies[current_position])):
-        key_procedure_execute("E")
-    if key[pygame.K_f] and (any("F" in i for i in myMesh.adjacencies[current_position])):
-        key_procedure_execute("F")
-    if key[pygame.K_g] and (any("G" in i for i in myMesh.adjacencies[current_position])):
-        key_procedure_execute("G")
-    if key[pygame.K_h] and (any("H" in i for i in myMesh.adjacencies[current_position])):
-        key_procedure_execute("H")
-    if key[pygame.K_i] and (any("I" in i for i in myMesh.adjacencies[current_position])):
-        key_procedure_execute("I")
+    if active_input_1 == False and active_input_2 == False:
+        if key[pygame.K_a] and (any("A" in i for i in myMesh.adjacencies[current_position])):
+            key_procedure_execute("A")
+        if key[pygame.K_b] and (any("B" in i for i in myMesh.adjacencies[current_position])):
+            key_procedure_execute("B")
+        if key[pygame.K_c] and (any("C" in i for i in myMesh.adjacencies[current_position])):
+            key_procedure_execute("C")
+        if key[pygame.K_d] and (any("D" in i for i in myMesh.adjacencies[current_position])):
+            key_procedure_execute("D")
+        if key[pygame.K_e] and (any("E" in i for i in myMesh.adjacencies[current_position])):
+            key_procedure_execute("E")
+        if key[pygame.K_f] and (any("F" in i for i in myMesh.adjacencies[current_position])):
+            key_procedure_execute("F")
+        if key[pygame.K_g] and (any("G" in i for i in myMesh.adjacencies[current_position])):
+            key_procedure_execute("G")
+        if key[pygame.K_h] and (any("H" in i for i in myMesh.adjacencies[current_position])):
+            key_procedure_execute("H")
+        if key[pygame.K_i] and (any("I" in i for i in myMesh.adjacencies[current_position])):
+            key_procedure_execute("I")
     
 
     if key[pygame.K_p]:
         cumulative_distance = 0
 
 
-    if dijkstra_alg_btn.check_clicked() and time_interval > 3:
-        display_table = True
-        start_consec_list_proc = True
-        dijkstar_alg_execute("A")
-        time_interval = 0
+    if dijkstra_alg_btn.check_clicked() and validInput() and time_interval > 3:
+        result_dict = {} 
+        dijkstar_alg = True
         num_ofrows = 3
+        list_display = backtrack_list(dijkstar_alg_execute(user_input_1, user_input_2))
+        display_string = str(list_display[0])
+        for j in range(len(list_display)-1):
+            display_string += f" -> {list_display[j+1]}"
+        display_string_obj = text_font_table_data.render(display_string, True, (0, 0, 0))
+        user_input_1 = ""
+        user_input_2 = ""
+        time_interval = 0
+        
+    if dijkstar_alg:
+        display_table_func(num_ofrows, result_dict)
+        screen.blit(display_string_obj, (950, 140))
+
        
         
 
@@ -370,12 +446,10 @@ while run:
         time_interval += 1
 
 
-    if display_table:
-        display_table_func(num_ofrows, result_dict)
+    
 
-    for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
+
+    
     
     pygame.display.update()
     clock.tick(30)
