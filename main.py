@@ -10,7 +10,7 @@ clock = pygame.time.Clock()
 
 
 run = True
-bg_colour = (0, 255, 255)
+bg_colour = (0, 0, 0)
 
 red_node_img = pygame.image.load("red_node.png")
 purple_node_img = pygame.image.load("purple_node.png")
@@ -20,6 +20,7 @@ input_made = False
 input_field_displayed = False
 destination = ""
 dijkstar_alg = False
+a_star_alg = False
 user_input_1 = ""
 user_input_2 = ""
 active_input_1 = False
@@ -110,11 +111,16 @@ class Mesh:
             return True
         else:
             return False
+        
+    def getCoorOfNode(self, node_name):
+        return self.nodes[node_name][0]
+        
 
 
-dijkstra_alg_btn = Button(pygame.image.load('dijkstra_btn_1.png'), pygame.image.load('dijkstra_btn_2.png'), 1090, 500, 0.5)
+dijkstra_alg_btn = Button(pygame.image.load('dijkstra_btn_1.png'), pygame.image.load('dijkstra_btn_2.png'), 1150, 520, 0.4)
+a_star_alg_btn = Button(pygame.image.load('a_alg_btn_1.png'), pygame.image.load('a_alg_btn_2.png'), 1150, 470, 0.4)
 buttons_spr_group = pygame.sprite.Group()
-buttons_spr_group.add(dijkstra_alg_btn)
+buttons_spr_group.add(dijkstra_alg_btn, a_star_alg_btn)
 
 
 
@@ -131,8 +137,8 @@ myMesh.addNode("I", 850, 490, 27, "Iguana")
 
 
 myMesh.joinNodes("A",("D", 25), ("E", 40), ("H", 40))
-myMesh.joinNodes("B",("A", 40), ("C", 25), ("I", 25))
-myMesh.joinNodes("C",("A", 20), ("B", 25), ("E", 20))
+myMesh.joinNodes("B",("A", 5), ("C", 25), ("I", 25))
+myMesh.joinNodes("C",("A", 120), ("B", 25), ("E", 20))
 myMesh.joinNodes("D",("G", 45), ("I", 15))
 myMesh.joinNodes("E",("C", 30), ("D", 50), ("F", 50))
 myMesh.joinNodes("F",("C", 40), ("G", 25))
@@ -143,8 +149,8 @@ myMesh.joinNodes("I",("B", 30), ("D", 50))
 
 #myMesh.getNodes()
 #myMesh.getAdjacencies()
-print(myMesh.nodeExists("P"))
-
+#print(myMesh.nodeExists("P"))
+#print(myMesh.getCoorOfNode("A"))
 
 
 current_position = "A"
@@ -158,11 +164,11 @@ text_font_input = pygame.font.SysFont("Times New Roman", 30)
 
 node_names = [x for x in myMesh.nodes]
 time_interval = 0
-#display_table = False
+display_table = False
 #result_dict = {}
 
-text_input_1_label_surface = text_font_current_data.render("Start:", True, (0, 0, 0))
-text_input_2_label_surface = text_font_current_data.render("End:", True, (0, 0, 0))
+text_input_1_label_surface = text_font_current_data.render("Start:", True, (255, 255, 255))
+text_input_2_label_surface = text_font_current_data.render("End:", True, (255, 255, 255))
 
 
 
@@ -183,19 +189,65 @@ def key_procedure_execute(name):
     cumulative_distance += look_for_distance(previous_node, current_position)
     node_data = myMesh.nodes[current_position][2]
    
+def calc_h_val(from_node_name, to_node_name):
+    const_div = 10
+    h_val = round((((myMesh.getCoorOfNode(from_node_name)[0]-myMesh.getCoorOfNode(to_node_name)[0])**2 + (myMesh.getCoorOfNode(from_node_name)[1]-myMesh.getCoorOfNode(to_node_name)[1])**2) ** 0.5)/const_div)
+    return h_val
+
+def a_star_alg_execute(start_node_name, endNode):
+    dictionary = {}
+    visited_nodes_names = []
+    f_value_endNode = 1000000
+    f_value_endNode_bigger = True
+    dictionary[start_node_name] = [0, calc_h_val(start_node_name, endNode), calc_h_val(start_node_name, endNode), "-", ""]
+    
+    while f_value_endNode_bigger == True and len(visited_nodes_names) < len(myMesh.nodes):
+
+        print(visited_nodes_names)
+        compare_f_values = [j[2] for i,j in dictionary.items() if type(j[0])== int and i not in visited_nodes_names]
+        min_value = min(compare_f_values)
+        if min_value > f_value_endNode:
+            f_value_endNode_bigger = False
+        else:
+            for k, v in dictionary.items():
+                if v[2] == min_value:
+                    visit_node_name = k
+            
+            visited_nodes_names.append(visit_node_name)
+      
+            
+            for adj in myMesh.adjacencies[visit_node_name]:
+                if adj[0] not in visited_nodes_names:
+                    heuristic_value = calc_h_val(adj[0], endNode)
+                    f_value = adj[1] + dictionary[visit_node_name][0] + heuristic_value
+                    
+                    try:
+                        if f_value < dictionary[adj[0]][2]:
+                            dictionary[adj[0]] = [adj[1]+dictionary[visit_node_name][0], heuristic_value, f_value, visit_node_name, "-"]
+                    except:
+                        dictionary[adj[0]] = [adj[1]+dictionary[visit_node_name][0], heuristic_value, f_value, visit_node_name, "-"]
+            
+
+            if endNode in visited_nodes_names:
+                f_value_endNode = dictionary[endNode][2]
+            
+
+    for node, info in dictionary.items():
+        if node in visited_nodes_names:
+            if node == endNode:
+                info[4] = "!"
+            else:
+                info[4] = "V"
+        result_dict[node] = [info[0], info[1], info[2], info[3], info[4]]
+
 def dijkstar_alg_execute(start_node_name, endNode):
     dictionary = {}
     visited_nodes_names = []
 
     dictionary[start_node_name] = [0, "-"]
 
-    #for name, distance in myMesh.adjacencies[start_node_name]:
-        #unvisited_dictionary[name] = [distance, start_node_name]
-    #result_dict[start_node_name] = ["-", "-"]
-   #visited.append(start_node_name)
-   #
-
     while len(dictionary) > 0:
+        #print(dictionary)
         compare_distances = [j[0] for i,j in dictionary.items() if type(j[0])== int and i not in visited_nodes_names]
         min_value = min(compare_distances)
         for k, v in dictionary.items():
@@ -211,8 +263,6 @@ def dijkstar_alg_execute(start_node_name, endNode):
                         dictionary[adj[0]] = [adj[1]+dictionary[visit_node_name][0], visit_node_name]
                 except:
                     dictionary[adj[0]] = [adj[1]+dictionary[visit_node_name][0], visit_node_name]
-
-                #print(dictionary)
 
 
         result_dict[visit_node_name] = [dictionary[visit_node_name][0], dictionary[visit_node_name][1]]
@@ -232,10 +282,20 @@ def dijkstar_alg_execute(start_node_name, endNode):
 
     return list_for_the_route
      
-def display_table_func(num_of_rows, dictionary):
-    keys_dict = [i for i in dictionary.keys()]
-    distance_dict = [i[0] for i in dictionary.values()]
-    prervious_dict = [i[1] for i in dictionary.values()]
+def display_table_func(num_of_rows, dictionary, type_alg):
+    
+    if type_alg == "a_star":
+        nodes_dict = [i for i in dictionary.keys()]
+        distance_dict = [i[0] for i in dictionary.values()]
+        heuristic_dict = [i[1] for i in dictionary.values()]
+        f_value_dict = [i[2] for i in dictionary.values()]
+        previous_dict = [i[3] for i in dictionary.values()]
+        visited_dict = [i[4] for i in dictionary.values()]
+    elif type_alg == "dijkstra's":
+        nodes_dict = [i for i in dictionary.keys()]
+        distance_dict = [i[0] for i in dictionary.values()]
+        previous_dict = [i[1] for i in dictionary.values()]
+      
 
     y_coor_1 = 175
     y_coor_2 = y_coor_1
@@ -250,28 +310,56 @@ def display_table_func(num_of_rows, dictionary):
 
 
     for i in range(0, num_of_rows+1):
-        pygame.draw.line(screen, (0, 0, 0), (x_coor_1, y_coor_1), (x_coor_2, y_coor_1), width = 3)
+        pygame.draw.line(screen, (255, 255, 255), (x_coor_1, y_coor_1), (x_coor_2, y_coor_1), width = 3)
         
         if i < num_of_rows:
             for j in range(0, len(myMesh.nodes)):
                 if i == 0:
                     try:
-                        display_table_data = text_font_table_data.render(str(keys_dict[j]), True, (0,0,0))
+                        display_table_data = text_font_table_data.render(str(nodes_dict[j]), True, (255, 255, 255))
                     except IndexError:
-                        display_table_data = text_font_table_data.render("-", True, (0,0,0))
-                    screen.blit(display_table_data, (x_coor_3, y_coor_3))
+                        display_table_data = text_font_table_data.render("-", True, (255, 255, 255))
+                    
                 if i == 1:
                     try:
-                        display_table_data = text_font_table_data.render(str(distance_dict[j]), True, (0,0,0))
+                        if type_alg == "dijkstra's":
+                            display_table_data = text_font_table_data.render(str(distance_dict[j]), True, (255, 255, 255))
+                        if type_alg == "a_star":
+                            display_table_data = text_font_table_data.render(str(distance_dict[j]), True, (255, 255, 255))
                     except IndexError:
-                        display_table_data = text_font_table_data.render("-", True, (0,0,0))
-                    screen.blit(display_table_data, (x_coor_3, y_coor_3))
+                        display_table_data = text_font_table_data.render("-", True, (255, 255, 255))
+                    
                 if i == 2:
                     try:
-                        display_table_data = text_font_table_data.render(str(prervious_dict[j]), True, (0,0,0))
+                        if type_alg == "dijkstra's":
+                            display_table_data = text_font_table_data.render(str(previous_dict[j]), True, (255, 255, 255))
+                        if type_alg == "a_star":
+                            display_table_data = text_font_table_data.render(str(heuristic_dict[j]), True, (255, 255, 255))
                     except IndexError:
-                        display_table_data = text_font_table_data.render("-", True, (0,0,0))
-                    screen.blit(display_table_data, (x_coor_3, y_coor_3))
+                        display_table_data = text_font_table_data.render("-", True, (255, 255, 255))
+                    
+
+                if type_alg == "a_star" and i >= 3:
+                    if i == 3:
+                        try:
+                            display_table_data = text_font_table_data.render(str(f_value_dict[j]), True, (255, 255, 255))
+                        except IndexError:
+                            display_table_data = text_font_table_data.render("-", True, (255, 255, 255))
+                        
+                    if i == 4:
+                        try:
+                            display_table_data = text_font_table_data.render(str(previous_dict[j]), True, (255, 255, 255))
+                        except IndexError:
+                            display_table_data = text_font_table_data.render("-", True, (255, 255, 255))
+                        
+                    if i == 5:
+                        try:
+                            display_table_data = text_font_table_data.render(str(visited_dict[j]), True, (255, 255, 255))
+                        except IndexError:
+                            display_table_data = text_font_table_data.render("-", True, (255, 255, 255))
+                        
+                screen.blit(display_table_data, (x_coor_3, y_coor_3))
+
 
                 x_coor_3 += difference_x
                 
@@ -284,7 +372,7 @@ def display_table_func(num_of_rows, dictionary):
     y_coor_1 -= difference_y
    
     for j in range(0, len(myMesh.nodes)+1):
-        pygame.draw.line(screen, (0, 0, 0), (x_coor_1, y_coor_2), (x_coor_1, y_coor_1), width = 3)
+        pygame.draw.line(screen, (255, 255, 255), (x_coor_1, y_coor_2), (x_coor_1, y_coor_1), width = 3)
         x_coor_1 += difference_x
 
 def backtrack_list(list):
@@ -298,6 +386,8 @@ def validInput():
         return True
     else:
         return False
+
+
 
 while run:
     screen.fill(bg_colour)
@@ -334,11 +424,11 @@ while run:
     buttons_spr_group.update()
     buttons_spr_group.draw(screen)
 
-    pygame.draw.rect(screen, (0,0,0), user_input_rect_1, 2)
-    pygame.draw.rect(screen, (0,0,0), user_input_rect_2, 2)
+    pygame.draw.rect(screen, (255, 255, 255), user_input_rect_1, 2)
+    pygame.draw.rect(screen, (255, 255, 255), user_input_rect_2, 2)
 
-    text_input_1_surface = text_font_input.render(user_input_1, True, (0, 0, 0))
-    text_input_2_surface = text_font_input.render(user_input_2, True, (0, 0, 0))
+    text_input_1_surface = text_font_input.render(user_input_1, True, (255, 255, 255))
+    text_input_2_surface = text_font_input.render(user_input_2, True, (255, 255, 255))
     screen.blit(text_input_1_surface, (user_input_rect_1.x + 5, user_input_rect_1.y))
     screen.blit(text_input_2_surface, (user_input_rect_2.x + 5, user_input_rect_2.y))
 
@@ -354,7 +444,7 @@ while run:
             pygame.draw.line(screen, (255, 255, 0), (myMesh.nodes[node][0][0]+(red_node_img.get_width()*(myMesh.nodes[node][1]/50)/2), myMesh.nodes[node][0][1]+(red_node_img.get_height()*(myMesh.nodes[node][1]/50)/2)), (myMesh.nodes[adj[0]][0][0]+(red_node_img.get_width()*(myMesh.nodes[adj[0]][1]/50)/2), myMesh.nodes[adj[0]][0][1]+(red_node_img.get_height()*(myMesh.nodes[adj[0]][1]/50)/2)), width = 10)
 
             text_font_distance = pygame.font.SysFont("Arial", 20, bold=True)
-            display_distance = text_font_distance.render(f"{node}->{adj[0]}: {adj[1]}", True, (0, 0, 0))
+            display_distance = text_font_distance.render(f"{node}->{adj[0]}: {adj[1]}", True, (255, 255, 255))
             #screen.blit(display_distance, ( ((myMesh.nodes[node][0][0]+(red_node_img.get_width()*(myMesh.nodes[node][1]/50)/2))+(myMesh.nodes[adj[0]][0][0]+(red_node_img.get_width()*(myMesh.nodes[adj[0]][1]/50)/2)))/2 , ((myMesh.nodes[node][0][1]+(red_node_img.get_height()*(myMesh.nodes[node][1]/50)/2))+(myMesh.nodes[adj[0]][0][1]+(red_node_img.get_height()*(myMesh.nodes[adj[0]][1]/50)/2)))/2))
             screen.blit(display_distance, (path_distance_x_coor, path_distance_y_coor))
 
@@ -377,17 +467,17 @@ while run:
         screen.blit(work_image, info[0])
 
         text_font_node = pygame.font.SysFont("Arial", int(info[1]*1.4), bold=True)
-        display_node = text_font_node.render(str(node), True, (0, 0, 0))
+        display_node = text_font_node.render(str(node), True, (255, 255, 255))
         screen.blit(display_node, (info[0][0]+(work_image.get_width()/2)-(display_node.get_width()/2), info[0][1]+(work_image.get_height()/2)-(display_node.get_height()/1.5)))
         
         text_font_weight = pygame.font.SysFont("Arial", int(info[1]*0.8), bold=True)
-        display_weight = text_font_weight.render(str(info[1]), True, (0, 0, 0))
+        display_weight = text_font_weight.render(str(info[1]), True, (255, 255, 255))
         screen.blit(display_weight, (info[0][0]+(work_image.get_width()/2)-(display_weight.get_width()/2), info[0][1]+(work_image.get_height()/1.3)-(display_weight.get_height()/2)))
         
     
-    display_total_distance = text_font_current_data.render(f"cd: {cumulative_distance}", True, (0, 0, 0))
-    display_previous_node = text_font_current_data.render(f"p_node: {previous_node}", True, (0, 0, 0))
-    display_node_data = text_font_current_data.render(f"data: {node_data}", True, (0, 0, 0))
+    display_total_distance = text_font_current_data.render(f"cd: {cumulative_distance}", True, (255, 255, 255))
+    display_previous_node = text_font_current_data.render(f"p_node: {previous_node}", True, (255, 255, 255))
+    display_node_data = text_font_current_data.render(f"data: {node_data}", True, (255, 255, 255))
     
     screen.blit(display_total_distance, (1100, 20))
     screen.blit(display_previous_node, (1100, 50))
@@ -429,16 +519,32 @@ while run:
         display_string = str(list_display[0])
         for j in range(len(list_display)-1):
             display_string += f" -> {list_display[j+1]}"
-        display_string_obj = text_font_table_data.render(display_string, True, (0, 0, 0))
-        user_input_1 = ""
-        user_input_2 = ""
+        display_string_obj = text_font_table_data.render(display_string, True, (255, 255, 255))
         time_interval = 0
+        a_star_alg = False
+
+    if a_star_alg_btn.check_clicked() and validInput() and time_interval > 3:
+        result_dict = {} 
+        num_ofrows = 6
+        time_interval = 0
+        a_star_alg = True
+        dijkstar_alg = False
+        a_star_alg_execute(user_input_1, user_input_2)
+        
+
+    #if display_table:
+        #display_table_func(num_ofrows, result_dict, "test")
+        #display_table = True
         
     if dijkstar_alg:
-        display_table_func(num_ofrows, result_dict)
+        display_table_func(num_ofrows, result_dict, "dijkstra's")
         screen.blit(display_string_obj, (950, 140))
 
-       
+    if a_star_alg:
+        display_table_func(num_ofrows, result_dict, "a_star")
+        
+
+
         
 
     
