@@ -203,7 +203,7 @@ def a_star_alg_execute(start_node_name, endNode):
     
     while f_value_endNode_bigger == True and len(visited_nodes_names) < len(myMesh.nodes):
 
-        print(visited_nodes_names)
+        
         compare_f_values = [j[2] for i,j in dictionary.items() if type(j[0])== int and i not in visited_nodes_names]
         min_value = min(compare_f_values)
         if min_value > f_value_endNode:
@@ -239,6 +239,17 @@ def a_star_alg_execute(start_node_name, endNode):
             else:
                 info[4] = "V"
         result_dict[node] = [info[0], info[1], info[2], info[3], info[4]]
+
+    list_for_the_route = []
+    pointer = endNode
+    while pointer != start_node_name:
+        for key, value in result_dict.items():
+            if key == pointer:
+                list_for_the_route.append(pointer)
+                pointer = value[3]
+    list_for_the_route.append(start_node_name)
+
+    return list_for_the_route
 
 def dijkstar_alg_execute(start_node_name, endNode):
     dictionary = {}
@@ -529,7 +540,12 @@ while run:
         time_interval = 0
         a_star_alg = True
         dijkstar_alg = False
-        a_star_alg_execute(user_input_1, user_input_2)
+        list_display = backtrack_list(a_star_alg_execute(user_input_1, user_input_2))
+        display_string = str(list_display[0])
+        for j in range(len(list_display)-1):
+            display_string += f" -> {list_display[j+1]}"
+        display_string_obj = text_font_table_data.render(display_string, True, (255, 255, 255))
+        
         
 
     #if display_table:
@@ -542,6 +558,7 @@ while run:
 
     if a_star_alg:
         display_table_func(num_ofrows, result_dict, "a_star")
+        screen.blit(display_string_obj, (950, 140))
         
 
 
