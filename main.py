@@ -310,8 +310,8 @@ def display_table_func(num_of_rows, dictionary, type_alg):
 
     y_coor_1 = 175
     y_coor_2 = y_coor_1
-    x_coor_1 = 930
-    x_coor_2 = 1280
+    x_coor_1 = 900
+    x_coor_2 = 1250
 
     difference_y = 45
     difference_x = (x_coor_2-x_coor_1)/len(myMesh.nodes)
@@ -321,10 +321,10 @@ def display_table_func(num_of_rows, dictionary, type_alg):
 
 
     for i in range(0, num_of_rows+1):
-        pygame.draw.line(screen, (255, 255, 255), (x_coor_1, y_coor_1), (x_coor_2, y_coor_1), width = 3)
+        pygame.draw.line(screen, (255, 255, 255), (x_coor_1, y_coor_1), (x_coor_2+38, y_coor_1), width = 3) #find proper way instead of +38
         
         if i < num_of_rows:
-            for j in range(0, len(myMesh.nodes)):
+            for j in range(0, len(myMesh.nodes)+1):
                 if i == 0:
                     try:
                         display_table_data = text_font_table_data.render(str(nodes_dict[j]), True, (255, 255, 255))
@@ -374,7 +374,7 @@ def display_table_func(num_of_rows, dictionary, type_alg):
 
                 x_coor_3 += difference_x
                 
-                if j == len(myMesh.nodes)-1:
+                if j == len(myMesh.nodes):
                     x_coor_3 = x_coor_1 + difference_x/7
         
         y_coor_1 += difference_y
@@ -382,7 +382,7 @@ def display_table_func(num_of_rows, dictionary, type_alg):
 
     y_coor_1 -= difference_y
    
-    for j in range(0, len(myMesh.nodes)+1):
+    for j in range(0, len(myMesh.nodes)+2):
         pygame.draw.line(screen, (255, 255, 255), (x_coor_1, y_coor_2), (x_coor_1, y_coor_1), width = 3)
         x_coor_1 += difference_x
 
@@ -523,7 +523,7 @@ while run:
 
 
     if dijkstra_alg_btn.check_clicked() and validInput() and time_interval > 3:
-        result_dict = {} 
+        result_dict = {"N": ["g", "P"]} 
         dijkstar_alg = True
         num_ofrows = 3
         list_display = backtrack_list(dijkstar_alg_execute(user_input_1, user_input_2))
@@ -535,7 +535,7 @@ while run:
         a_star_alg = False
 
     if a_star_alg_btn.check_clicked() and validInput() and time_interval > 3:
-        result_dict = {} 
+        result_dict = {"N": ["g", "h", "f", "P", "S"]} 
         num_ofrows = 6
         time_interval = 0
         a_star_alg = True
